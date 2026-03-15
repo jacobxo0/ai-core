@@ -1,0 +1,23 @@
+# Git and IDE
+.git
+.gitignore
+.cursor
+*.md
+!docs/*.md
+
+# Python
+__pycache__
+*.py[cod]
+*.pyo
+.venv
+venv
+.env
+.env.*
+
+# Data (ephemeral on Railway; avoid baking into image)
+data/
+
+# Tests (not needed in production image)
+tests/
+pytest.ini
+*.plan.md
