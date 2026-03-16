@@ -106,6 +106,6 @@ The "self-improving cycle" and remote interfaces are later. Current phase: **sta
 - [x] All 7 runbook steps pass on the machine(s) you use. *(Verified: install, 10 tests OK, server start, GET /, GET /tools, POST /command healthcheck, POST /command echo+request_id.)*
 - [x] README quick start uses `py` and includes `/command` and healthcheck.
 - [x] No new features merged until the runbook is green and README is updated.
-- [ ] Git state clear (either repo initialized with remote, or explicitly documented as "local only for now").
+- [x] Git state clear: repo initialiseret, første commit. Til deploy: tilføj remote (`git remote add origin <url>`), evt. `git branch -M main`, og `git push -u origin main`.
 
 After that, the next phase (e.g. one more tool, scheduler stub, or deployment) can be planned from a known-good base.

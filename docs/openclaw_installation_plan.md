@@ -1,6 +1,6 @@
 # OpenClaw (Clawrunner) installation – Railway, GitHub, Docker
 
-Én nøje plan for at installere eller deploye OpenClaw (Clawrunner) med tre leveringsveje. Clawrunner-koden ligger i et andet repo (fx `jacobxo0/Clawrunner`); denne doc beskriver kun hvordan man installerer/deployer den.
+Vi bruger **Clawrunner** ([jacobxo0/Clawrunner](https://github.com/jacobxo0/Clawrunner)) som OpenClaw gateway. Én nøje plan for at installere eller deploye den med tre leveringsveje (Railway, GitHub, Docker). Clawrunner-koden ligger i det andet repo; denne doc beskriver kun hvordan man installerer/deployer den.
 
 Fuld env-tabel og crash-fejlsøgning: [openclaw-railway-reference.md](openclaw-railway-reference.md).
 
