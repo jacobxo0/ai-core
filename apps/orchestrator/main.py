@@ -25,6 +25,7 @@ import tools.run_check as _run_check
 import tools.fetch_url as _fetch_url
 import tools.query_runs as _query_runs
 import tools.suggest_fix as _suggest_fix
+import tools.ollama_health as _ollama_health
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -60,7 +61,8 @@ registry.register("system_info", _system_info.execute,  description="CPU, memory
 registry.register("run_check",   _run_check.execute,    description="Runs a shell command and returns output. Local use only.")
 registry.register("fetch_url",   _fetch_url.execute,    description="HTTP GET a URL; returns status and body preview.")
 registry.register("query_runs",  _query_runs.execute,   description="Query recent tool runs from the memory store.")
-registry.register("suggest_fix", _suggest_fix.execute,  description="Ask the model gateway to suggest a fix for a tool error.")
+registry.register("suggest_fix",   _suggest_fix.execute,   description="Ask the model gateway to suggest a fix for a tool error.")
+registry.register("ollama_health", _ollama_health.execute, description="Check if Ollama is reachable and list available models.")
 
 # ── App ───────────────────────────────────────────────────────────────────────
 
@@ -91,6 +93,9 @@ _set_webhook_run_fn(_run_command)
 async def _startup() -> None:
     interval = int(os.getenv("SCHEDULE_HEALTHCHECK", "300"))
     scheduler.add_job("healthcheck_periodic", "healthcheck", {}, interval)
+    if gateway.is_configured():
+        ollama_interval = int(os.getenv("SCHEDULE_OLLAMA_HEALTH", "600"))
+        scheduler.add_job("ollama_health_periodic", "ollama_health", {}, ollama_interval)
     scheduler.start(_run_command)
     logger.info(
         "startup version=0.2.0 tools=%d scheduler_jobs=%d",

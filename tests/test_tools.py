@@ -168,5 +168,48 @@ class TestSuggestFix(unittest.TestCase):
             sf.set_gateway(original_gw)
 
 
+class TestOllamaHealth(unittest.TestCase):
+    def test_no_url_returns_not_configured(self):
+        from tools.ollama_health import execute
+        import os
+        old = os.environ.pop("OLLAMA_BASE_URL", None)
+        try:
+            result = execute(base_url="")
+            self.assertFalse(result["reachable"])
+            self.assertFalse(result["configured"])
+            self.assertIn("not set", result["error"])
+        finally:
+            if old:
+                os.environ["OLLAMA_BASE_URL"] = old
+
+    def test_connect_error_returns_reachable_false(self):
+        import httpx
+        from tools.ollama_health import execute
+        with patch("tools.ollama_health.httpx.get", side_effect=httpx.ConnectError("refused")):
+            result = execute(base_url="http://localhost:11434")
+        self.assertFalse(result["reachable"])
+        self.assertTrue(result["configured"])
+        self.assertIn("cannot connect", result["error"])
+
+    def test_success_returns_models(self):
+        from tools.ollama_health import execute
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"models": [{"name": "llama3.2:3b"}, {"name": "qwen2.5:7b"}]}
+        mock_resp.raise_for_status = MagicMock()
+        with patch("tools.ollama_health.httpx.get", return_value=mock_resp):
+            result = execute(base_url="http://localhost:11434")
+        self.assertTrue(result["reachable"])
+        self.assertEqual(result["model_count"], 2)
+        self.assertIn("llama3.2:3b", result["models"])
+
+    def test_timeout_returns_reachable_false(self):
+        import httpx
+        from tools.ollama_health import execute
+        with patch("tools.ollama_health.httpx.get", side_effect=httpx.TimeoutException("timeout")):
+            result = execute(base_url="http://localhost:11434")
+        self.assertFalse(result["reachable"])
+        self.assertIn("timeout", result["error"])
+
+
 if __name__ == "__main__":
     unittest.main()
