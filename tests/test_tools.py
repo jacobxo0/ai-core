@@ -79,20 +79,70 @@ class TestFetchUrl(unittest.TestCase):
         mock_resp.url = "https://example.com"
         mock_resp.headers = {"content-type": "text/html"}
         mock_resp.text = "<html>ok</html>"
+        mock_resp.json.side_effect = Exception("not json")
         mock_resp.elapsed.total_seconds.return_value = 0.1
 
-        with patch("tools.fetch_url.httpx.get", return_value=mock_resp):
+        mock_client = MagicMock()
+        mock_client.__enter__ = MagicMock(return_value=mock_client)
+        mock_client.__exit__ = MagicMock(return_value=False)
+        mock_client.request.return_value = mock_resp
+
+        with patch("tools.fetch_url.httpx.Client", return_value=mock_client):
             result = execute(url="https://example.com")
 
         self.assertTrue(result["success"])
         self.assertEqual(result["status_code"], 200)
-        self.assertIn("body_preview", result)
+        self.assertIn("body", result)
+
+    def test_successful_post_with_headers(self):
+        from tools.fetch_url import execute
+
+        mock_resp = MagicMock()
+        mock_resp.is_success = True
+        mock_resp.status_code = 200
+        mock_resp.url = "https://api.example.com/search"
+        mock_resp.headers = {"content-type": "application/json"}
+        mock_resp.json.return_value = {"answer": "test", "results": []}
+        mock_resp.elapsed.total_seconds.return_value = 0.2
+
+        mock_client = MagicMock()
+        mock_client.__enter__ = MagicMock(return_value=mock_client)
+        mock_client.__exit__ = MagicMock(return_value=False)
+        mock_client.request.return_value = mock_resp
+
+        with patch("tools.fetch_url.httpx.Client", return_value=mock_client):
+            result = execute(
+                url="https://api.example.com/search",
+                method="POST",
+                headers={"Authorization": "Bearer test-key"},
+                body={"query": "AI news"},
+            )
+
+        self.assertTrue(result["success"])
+        self.assertEqual(result["body"], {"answer": "test", "results": []})
+        mock_client.request.assert_called_once_with(
+            "POST",
+            "https://api.example.com/search",
+            headers={"Authorization": "Bearer test-key"},
+            json={"query": "AI news"},
+        )
+
+    def test_invalid_method(self):
+        from tools.fetch_url import execute
+        result = execute(url="https://example.com", method="BADMETHOD")
+        self.assertFalse(result["success"])
+        self.assertIn("unsupported method", result["error"])
 
     def test_timeout_error(self):
         from tools.fetch_url import execute
         import httpx
 
-        with patch("tools.fetch_url.httpx.get", side_effect=httpx.TimeoutException("timeout")):
+        mock_client = MagicMock()
+        mock_client.__enter__ = MagicMock(return_value=mock_client)
+        mock_client.__exit__ = MagicMock(return_value=False)
+        mock_client.request.side_effect = httpx.TimeoutException("timeout")
+
+        with patch("tools.fetch_url.httpx.Client", return_value=mock_client):
             result = execute(url="https://example.com", timeout=1)
 
         self.assertFalse(result["success"])
